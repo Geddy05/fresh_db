@@ -21,11 +21,11 @@ class Schema:
         for name, table in self.tables.items():
             storage_manager.save_table(name, table)
 
-    def load(self, table_class, storage_manager):
+    def load(self, storage_manager):
         for name in os.listdir("data"):
             if name.endswith(".tbl.json"):
                 tname = name.replace(".tbl.json", "")
-                self.tables[tname] = storage_manager.load_table(tname, table_class)
+                self.tables[tname] = storage_manager.load_table(tname)
 
     def __repr__(self):
         return f"Schema({list(self.tables.keys())})"

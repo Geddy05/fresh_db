@@ -1,6 +1,8 @@
 import json
 import os
 
+from core.table import Table
+
 DATA_DIR = "data"
 
 class StorageManager:
@@ -12,10 +14,10 @@ class StorageManager:
         with open(path, "w") as f:
             json.dump(table_obj.to_dict(), f)
 
-    def load_table(self, table_name, table_class):
+    def load_table(self, table_name):
         path = os.path.join(DATA_DIR, f"{table_name}.tbl.json")
         if not os.path.exists(path):
             raise FileNotFoundError(f"Table {table_name} does not exist.")
         with open(path, "r") as f:
             data = json.load(f)
-        return table_class.from_dict(data)
+        return Table.from_dict(data)
