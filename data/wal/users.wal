@@ -1,2 +1,0 @@
-{"op": "INSERT", "row": {"id": 1, "name": "Alice"}}
-{"op": "INSERT", "row": {"id": 2, "name": "Bob"}}
