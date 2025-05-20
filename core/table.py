@@ -1,30 +1,29 @@
 from core.column import Column
-from core.constraints import Constraint
+from storage.manager import StorageManager
 
 
 class Table:
-    def __init__(self, name):
+    def __init__(self, name: str, storage: StorageManager,columns: list[Column] = []):
         self.name = name
-        self.columns = []
-        self.rows = []  # We'll keep rows in memory for now
-
-    def __init__(self, name:str, columns: list[Column] ):
-        self.name = name
+        self.storage = storage
         self.columns = columns
-        self.rows = []
+        self.rows = []  # We'll keep rows in memory for now
 
     def add_column(self, column: Column):
         self.columns.append(column)
 
     def insert(self, row_dict: dict):
         # Basic validation
-        row = []
-        for col in self.columns:
-            value = row_dict.get(col.name)
-            if Constraint.NOT_NULL in col.constraints and value is None:
-                raise ValueError(f"Column '{col.name}' cannot be NULL")
-            row.append(value)
-        self.rows.append(row)
+        self.storage.write_row(self.name, row_dict)
+
+    def flush(self):
+        self.storage.flush_table(self.name)
+
+    def select_all(self):
+        # Merge results from OLTP (row store) and OLAP (column store)
+        oltp_rows = self.storage.get_row_store(self.name).get_rows() # type: ignore
+        olap_rows = self.storage.get_column_store(self.name).load_segments()
+        return oltp_rows + olap_rows
 
     def to_dict(self):
         return {
@@ -34,9 +33,10 @@ class Table:
         }
 
     @classmethod
-    def from_dict(cls, data):
-        columns = [Column.from_dict(col_data) for col_data in data["columns"]]
-        table = cls(data["name"], columns)
+    def from_dict(cls, data: dict, storage_manager: StorageManager):
+        table = cls(data['name'], storage_manager)
+
+        table.columns = [Column.from_dict(col) for col in data.get('columns', [])]
         table.rows = data["rows"]
         return table
 
