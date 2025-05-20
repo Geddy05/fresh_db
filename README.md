@@ -128,6 +128,6 @@ If you’re interested in how real databases work—or want to make one that’s
 Check out the code, read the architecture docs, join the conversation, and help build the future of Python-based databases!
 
 ## 📄 **License** 
-MIT License (see LICENSE)
+Apache License 2.0 (see LICENSE)
 
 #### Built with ❤️ by database geeks, for learners and professionals everywhere.
