@@ -22,26 +22,23 @@ FreshDB is a modern, educational Python database engine inspired by the best ide
 
 ## 🏗️ **Folder Structure Overview**
 
-minidb/ 
-├── data/ # DB files, WALs, column segments, schema catalog
-├── config/ # Settings & environment config
-├── core/ # Data types, column, row, and table logic
-├── schema/ # Table definitions, schema.json
-├── storage/ # BlockManager, RowStore, ColumnStore
-├── indexing/ # (Planned) B+ tree and index manager
-├── query/ # SQL parsing, planning, and execution
-├── transaction/ # WAL and transactional logic
-├── jobs/ # Background job/event queue
-├── maintenance/ # (Optional) Maintenance managers/schedulers
-├── cli/ # REPL for interactive use
-├── tests/ # Unit tests for all modules
-├── utils/ # Exceptions, helpers
-├── main.py # Entry point / demo script
-└── README.md # You are here!
+minidb/ <br/>
+├── data/ # DB files, WALs, column segments, schema catalog <br/>
+├── config/ # Settings & environment config <br/>
+├── core/ # Data types, column, row, and table logic <br/>
+├── schema/ # Table definitions, schema.json <br/>
+├── storage/ # BlockManager, RowStore, ColumnStore <br/>
+├── indexing/ # (Planned) B+ tree and index manager <br/>
+├── query/ # SQL parsing, planning, and execution <br/>
+├── transaction/ # WAL and transactional logic <br/>
+├── jobs/ # Background job/event queue <br/>
+├── maintenance/ # (Optional) Maintenance managers/schedulers <br/>
+├── cli/ # REPL for interactive use <br/>
+├── tests/ # Unit tests for all modules <br/>
+├── utils/ # Exceptions, helpers <br/>
+├── main.py # Entry point / demo script <br/>
+└── README.md # You are here! <br/>
 
-
-
----
 
 ## 🏁 **Getting Started**
 
