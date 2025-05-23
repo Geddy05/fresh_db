@@ -27,7 +27,7 @@ def execute_query(parsed:QueryType, schema, storage_manager):
             return
         if parsed.conditions:
             col, val = parsed.conditions
-            results = [row for row in table.rows if str(row.get(col)) == val]
+            results = [row for row in table.select_all() if str(row.get(col)) == val]
         else:
             results = table.select_all()
         for r in results:

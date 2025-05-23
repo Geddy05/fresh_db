@@ -47,7 +47,7 @@ class StorageManager:
             if file.endswith(".wal"):
                 table_name = file.replace(".wal", "")
                 store = self.get_row_store(table_name)
-                store.replay_wal()
+                # store.replay_wal()
 
 
     # def save_table(self, table_name, table_obj):
