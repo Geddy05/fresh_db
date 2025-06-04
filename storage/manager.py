@@ -29,6 +29,10 @@ class StorageManager:
         """Insert into OLTP row store and log to WAL."""
         self.get_row_store(table_name).insert_row(row)
 
+    def bulk_write(self, table_name, rows:  list[dict]):
+        """Insert into OLTP row store and log to WAL."""
+        self.get_row_store(table_name).bulk_insert_rows(rows)
+
     def flush_table(self, table_name):
         """Flush rows to OLAP (segment) and clear WAL."""
         row_store = self.get_row_store(table_name)

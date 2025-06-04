@@ -8,6 +8,17 @@ class Column:
         self.constraints = constraints or []
         self.auto_increment = auto_increment
 
+    def is_primary(self):
+        return any(c.upper() == "PRIMARY KEY" for c in self.constraints)
+
+    def is_unique(self):
+        # Primary Key columns are always unique, UNIQUE constraint is also valid
+        return self.is_primary() or any(c.upper() == "UNIQUE" for c in self.constraints)
+
+    def is_not_null(self):
+        # Primary Key columns are always NOT NULL, or explicit NOT NULL constraint
+        return self.is_primary() or any(c.upper() == "NOT NULL" for c in self.constraints)
+
 
     def to_dict(self):
         return {

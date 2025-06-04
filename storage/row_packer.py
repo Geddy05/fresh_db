@@ -17,4 +17,6 @@ def decode_rows_block(data):
     if row_count == 0:
         return []
     payload = data[2:]
-    return json.loads(payload.rstrip(b"\x00"))
+     # Remove trailing nulls (padding), then decode to string, then load JSON
+    payload_str = payload.rstrip(b"\x00").decode("utf-8")
+    return json.loads(payload_str)

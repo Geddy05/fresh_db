@@ -10,7 +10,7 @@ from storage.manager import StorageManager
 # https://datasets.imdbws.com/
 
 IMDB_COLUMNS = [
-    Column("tconst", "TEXT", constraints=["PK"]),  # Primary Key
+    Column("tconst", "TEXT", constraints=["PRIMARY KEY"]),  # Primary Key
     Column("titleType", "TEXT"),
     Column("primaryTitle", "TEXT"),
     Column("originalTitle", "TEXT"),
@@ -41,6 +41,8 @@ def import_imdb_titles(filename, table_name="imdb_titles"):
         reader = csv.DictReader(f, delimiter='\t')
         n = 0
         start = time.time()
+        BATCH_SIZE = 10000
+        batch = []
         for row in reader:
             db_row = {
                 "tconst": row["tconst"],
@@ -53,16 +55,22 @@ def import_imdb_titles(filename, table_name="imdb_titles"):
                 "runtimeMinutes": imdb_value(row["runtimeMinutes"]),
                 "genres": row["genres"]
             }
+            batch.append(db_row)
+
             try:
-                table.insert(db_row)
+                if len(batch) == BATCH_SIZE:
+                    table.bulk_insert(batch)
+                    batch.clear()
             except Exception as e:
                 print(f"Error at row {n}: {e}")
             n += 1
-            if n % 10000 == 0:
+            if n % BATCH_SIZE == 0:
                 end = time.time()
                 elapsed = end - start
                 print(f"Imported {n} rows. Time taken last 10000 rows: {elapsed:.6f} seconds")
                 start = end
+        if batch:
+            table.bulk_insert(batch)
         print(f"Import complete. Total rows: {n}")
 
 if __name__ == "__main__":

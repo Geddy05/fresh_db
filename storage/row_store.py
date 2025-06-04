@@ -41,6 +41,34 @@ class RowStore:
         self.wal_manager.log_insert(row)
         self._insert_without_wal(row)
 
+    def bulk_insert_rows(self, rows: list[dict]):
+        """
+        Insert a batch of rows with minimal WAL and block writes.
+        """
+        # 1. WAL: log all rows at once (if your WALManager supports batch logging, otherwise loop)
+        self.wal_manager.log_insert_many(rows) if hasattr(self.wal_manager, "log_insert_many") else [self.wal_manager.log_insert(r) for r in rows]
+        
+        # 2. Buffer rows for block writing
+        buffer = []
+        last_block = self.bm.num_blocks() - 1
+        if last_block >= 0:
+            buffer = self.block_rows.get(last_block, [])
+        
+        for row in rows:
+            buffer.append(row)
+            # If buffer full, write and start new block
+            if len(buffer) >= 50:
+                block_num = last_block if last_block >= 0 else self.bm.allocate_block()
+                self.block_rows[block_num] = buffer
+                self.bm.write_block(block_num, encode_rows_block(buffer))
+                buffer = []
+                last_block = self.bm.allocate_block()
+        # Write any remaining rows in buffer
+        if buffer:
+            block_num = last_block if last_block >= 0 else self.bm.allocate_block()
+            self.block_rows[block_num] = buffer
+            self.bm.write_block(block_num, encode_rows_block(buffer))
+
     def _insert_without_wal(self, row):
         # Try to fit in the last block
         last_block = self.bm.num_blocks() - 1

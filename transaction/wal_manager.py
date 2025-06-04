@@ -11,6 +11,15 @@ class WALManager:
         entry = {"op": "INSERT", "row": row}
         with open(self.wal_path, "a") as f:
             f.write(json.dumps(entry) + "\n")
+    
+    def log_insert_many(self, rows):
+        """
+        Batch log a list of rows as INSERTs in a single file write.
+        """
+        with open(self.wal_path, "a") as f:
+            for row in rows:
+                entry = {"op": "INSERT", "row": row}
+                f.write(json.dumps(entry) + "\n")
 
     def log_delete(self, key):
         entry = {"op": "DELETE", "key": key}
