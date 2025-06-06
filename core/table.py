@@ -2,7 +2,6 @@ from core.column import Column
 from indexing.bplustree import BplusTree
 from storage.manager import StorageManager
 
-
 class Table:
     def __init__(self, name: str, storage: StorageManager,columns: list[Column] = []):
         self.name = name
