@@ -9,8 +9,6 @@ class QueryTypes(Enum):
 
 
 class QueryType:
-    def __init__(self):
-        self.type = QueryTypes.EMPTY
 
     def __init__(self,type:QueryTypes, table, values=[], columns=[],conditions=[], database=None):
         self.type = type
@@ -20,4 +18,11 @@ class QueryType:
         self.columns = columns
         self.conditions = conditions
 
-        
+    def is_valid(self):
+        return self.type is not None and self.type != QueryTypes.UNKNOWN
+
+    def __repr__(self):
+        return (
+            f"<QueryType type={self.type} table={self.table} "
+            f"columns={self.columns} values={self.values} conditions={self.conditions}>"
+        )
