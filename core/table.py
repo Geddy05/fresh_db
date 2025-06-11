@@ -60,7 +60,7 @@ class Table:
         - Fails the whole batch if any duplicate is detected (in the batch or vs. existing).
         - Otherwise, writes all rows, then updates indexes.
         """
-        
+
         # Step 1: Prepare sets for batch PK/UNIQUE check
         for col_name, bptree in self.indexes.items():
             # Check for duplicates in existing index
@@ -97,6 +97,22 @@ class Table:
 
     def flush(self):
         self.storage.flush_table(self.name)
+
+    def delete_rows(self, column, value):
+        # Only from OLTP (row store) for now
+        row_store = self.storage.get_row_store(self.name)
+        rows = row_store.get_rows()
+        initial_len = len(rows)
+        # Remove from in-memory index and storage
+        rows_to_keep = [row for row in rows if str(row.get(column)) != value]
+        n_deleted = initial_len - len(rows_to_keep)
+        # Overwrite storage with only the kept rows (simple way)
+        row_store.clear()
+        for row in rows_to_keep:
+            row_store.insert_row(row)
+        # You could also batch-write these for speed!
+        # Remove from in-memory indexes if needed
+        return n_deleted
 
     def select_all(self):
         # Merge results from OLTP (row store) and OLAP (column store)

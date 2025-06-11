@@ -157,6 +157,7 @@ def test_bulk_insert_assigns_auto_increment(table):
     table.bulk_insert([row])
     assert row['id'] == 123
 
+
 def test_bulk_insert_assigns_auto_increment_multiple(table):
     table.next_increment = 123
     row1 = {'id': None, 'val': 1}

@@ -17,9 +17,13 @@ class Schema:
         self.tables[table_name] = table
         self._save_schema()
 
-    def drop_table(self, table_name):
-        # Not implemented Yet
-        self._save_schema()
+    def drop_table(self, table_name, storage_manager=None):
+        if table_name in self.tables:
+            if storage_manager is not None:
+                storage_manager.drop_table(table_name)
+            del self.tables[table_name]
+            self._save_schema()
+
 
     def _save_schema(self):
         meta = {name: {"columns": [col.to_dict() for col in tbl.columns]} for name, tbl in self.tables.items()}

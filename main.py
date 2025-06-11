@@ -1,6 +1,7 @@
 import time
 import threading
 
+from core.stats import get_basic_stats
 from query.execute import execute_query
 from query.parser import parse_command
 from schema.schema import Schema
@@ -26,7 +27,7 @@ def schedule_periodic_compaction(job_queue, schema):
         time.sleep(COMPACTION_INTERVAL)
 
 def main():
-    print("FreshDB > Type your SQL-like commands.")
+
     storage_manager = StorageManager()
     schema = Schema()
     schema.load_schema(storage_manager)  # Discover tables on startup
@@ -34,6 +35,11 @@ def main():
     job_queue = JobQueue()
     job_queue.start()
 
+    stats = get_basic_stats(schema)
+    import pprint
+    pprint.pprint(stats)
+
+    print("FreshDB > Type your SQL-like commands.")
     # 3. Schedule periodic compaction for all tables (in a background thread)
     threading.Thread(target=schedule_periodic_compaction, args=(job_queue, schema), daemon=True).start()
 

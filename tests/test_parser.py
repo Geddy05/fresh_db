@@ -70,6 +70,6 @@ def test_parse_unknown_command_returns_unknown():
     q = parse_command("DROP TABLE users;")
     assert q.type == QueryTypes.UNKNOWN
 
-def test_parse_empty_command_returns_unknown()
+def test_parse_empty_command_returns_unknown():
     q = parse_command("")
     assert q.type == QueryTypes.UNKNOWN

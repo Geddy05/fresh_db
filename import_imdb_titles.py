@@ -1,13 +1,9 @@
 import csv
-import gzip
-import sys
 import time
-
 from core.column import Column
 from core.table import Table
+from schema.schema import Schema           # <-- Add this import!
 from storage.manager import StorageManager
-
-# https://datasets.imdbws.com/
 
 IMDB_COLUMNS = [
     Column("tconst", "TEXT", constraints=["PRIMARY KEY"]),  # Primary Key
@@ -34,7 +30,13 @@ def imdb_value(val):
 
 def import_imdb_titles(filename, table_name="imdb_titles"):
     storage_manager = StorageManager()
+    schema = Schema()   # <-- Create a schema instance
     table = Table(table_name, storage_manager, columns=IMDB_COLUMNS)
+
+    # Register table in schema
+    schema.tables[table_name] = table
+    schema._save_schema()  # Optionally save before, too
+
     print(f"Created table '{table_name}'.")
 
     with open(filename, 'r', encoding='utf-8') as f:
@@ -72,6 +74,10 @@ def import_imdb_titles(filename, table_name="imdb_titles"):
         if batch:
             table.bulk_insert(batch)
         print(f"Import complete. Total rows: {n}")
+
+    # Save schema at the end (table definition is persisted)
+    schema._save_schema()
+    print("Schema saved.")
 
 if __name__ == "__main__":
     filename= "data/title.basics.tsv"

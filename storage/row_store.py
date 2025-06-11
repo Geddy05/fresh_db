@@ -41,6 +41,7 @@ class RowStore:
         self.wal_manager.log_insert(row)
         self._insert_without_wal(row)
 
+
     def bulk_insert_rows(self, rows: list[dict]):
         """
         Insert a batch of rows with minimal WAL and block writes.
@@ -82,6 +83,17 @@ class RowStore:
         self.block_rows[block_num] = rows
         self.bm.write_block(block_num, encode_rows_block(rows))
 
+    def drop(self):
+        """Remove all persistent files and in-memory blocks for this table."""
+        # Remove block file
+        if os.path.exists(self.block_path):
+            os.remove(self.block_path)
+        # Remove WAL file
+        if os.path.exists(self.wal_manager.wal_path):
+            os.remove(self.wal_manager.wal_path)
+        # Clear in-memory state
+        self.block_rows.clear()
+
     def delete_row(self, key_value):
         self.wal_manager.log_delete(key_value)
         self._delete_without_wal(key_value)
@@ -101,7 +113,7 @@ class RowStore:
             all_rows.extend(rows)
         return all_rows
     
-    def clear(self):
+def clear(self):
         self.block_rows = {}
         self.wal_manager.clear()
     

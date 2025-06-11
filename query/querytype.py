@@ -5,6 +5,8 @@ class QueryTypes(Enum):
     CREATE = "CREATE"
     INSERT = "INSERT"
     SELECT = "SELECT"
+    DELETE = "DELETE"
+    DROP = "DROP"
     UNKNOWN = "UNKNOWN"
 
 

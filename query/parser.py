@@ -38,6 +38,20 @@ def parse_command(command: str):
                 val = tokens[-1].strip(";")
                 condition = (col, val.strip("'\""))
             return QueryType(type=QueryTypes.SELECT, table=table_name, conditions=condition)
+        
+        elif cmd == QueryTypes.DROP.value and tokens[1].upper() == "TABLE":
+            name = tokens[2]
+            return QueryType(type=QueryTypes.DROP, table=name)
+        
+        elif cmd == QueryTypes.DELETE.value:
+             # DELETE FROM tablename WHERE col = value
+            table_name = tokens[2]
+            condition = None
+            if "WHERE" in tokens:
+                col = tokens[tokens.index("WHERE") + 1]
+                val = tokens[-1].strip(";")
+                condition = (col, val.strip("'\""))
+            return QueryType(type=QueryTypes.DELETE, table=table_name, conditions=condition)
 
         
         else:
