@@ -65,3 +65,5 @@ if __name__ == '__main__':
 # INSERT INTO users VALUES (2, 'Bob');
 # SELECT * FROM users;
 # SELECT * FROM users WHERE name = 'Bob';
+# DROP TABLE users;
+# DELETE FROM users WHERE id = 2;

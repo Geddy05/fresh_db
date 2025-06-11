@@ -32,14 +32,14 @@ def execute_query(parsed:QueryType, schema, storage_manager):
             results = table.select_all()
         for r in results:
             print(r)
-    elif cmd_type == "DROP":
+    elif cmd_type == QueryTypes.DROP:
         if parsed.table in schema.tables:
             schema.drop_table(parsed.table, storage_manager=storage_manager)
             print(f"Table '{parsed.table}' dropped (files deleted).")
         else:
             print("Table does not exist.")
 
-    elif cmd_type == "DELETE":
+    elif cmd_type == QueryTypes.DELETE:
         table = schema.tables.get(parsed.table)
         if not table:
             print("Table does not exist.")

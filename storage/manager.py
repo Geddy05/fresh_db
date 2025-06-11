@@ -33,6 +33,17 @@ class StorageManager:
         """Insert into OLTP row store and log to WAL."""
         self.get_row_store(table_name).bulk_insert_rows(rows)
 
+    def drop_table(self, table_name):
+        # Drop RowStore files and remove from manager
+        if table_name in self.row_stores:
+            self.row_stores[table_name].drop()
+            del self.row_stores[table_name]
+        # Drop ColumnStore (optional, if you store columnar segments)
+        if table_name in self.column_stores:
+            self.column_stores[table_name].drop()  # You'll need to implement drop() in ColumnStore
+            del self.column_stores[table_name]
+        # Remove any other related files if needed (indexes, etc)
+
     def flush_table(self, table_name):
         """Flush rows to OLAP (segment) and clear WAL."""
         row_store = self.get_row_store(table_name)
