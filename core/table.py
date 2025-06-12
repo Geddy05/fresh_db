@@ -42,6 +42,12 @@ class Table:
             path = os.path.join(base_path, f"{self.name}_{col_name}_bptree.json")
             bptree.save(path)
 
+    def load_indexes(self, base_path='data/indexes/'):
+        for col_name in self.indexes.keys():
+            path = os.path.join(base_path, f"{self.name}_{col_name}_bptree.json")
+            if os.path.exists(path):
+                self.indexes[col_name] = BplusTree.load(path, order=32)
+
     def insert(self, row_dict: dict):
         # # Check if column has a name
         for col in self.columns:
