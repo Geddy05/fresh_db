@@ -1,3 +1,4 @@
+import os
 from core.column import Column
 from indexing.bplustree import BplusTree
 from storage.manager import StorageManager
@@ -14,7 +15,13 @@ class Table:
         self.indexes = {}
         for col in columns:
             if col.is_unique():
-                self.indexes[col.name] = BplusTree(order=32)
+                bptree = None
+                idx_path = f"data/indexes/{self.name}_{col.name}_bptree.json"
+                if os.path.exists(idx_path):
+                    bptree = BplusTree.load(idx_path, order=32)
+                else:
+                    bptree = BplusTree(order=32)
+                self.indexes[col.name] = bptree
 
 
     def _load_next_increment(self):
@@ -28,6 +35,12 @@ class Table:
 
     def add_column(self, column: Column):
         self.columns.append(column)
+    
+    def save_indexes(self, base_path='data/indexes/'):
+        os.makedirs(base_path, exist_ok=True)
+        for col_name, bptree in self.indexes.items():
+            path = os.path.join(base_path, f"{self.name}_{col_name}_bptree.json")
+            bptree.save(path)
 
     def insert(self, row_dict: dict):
         # # Check if column has a name
@@ -54,6 +67,7 @@ class Table:
         # Update indexes
         for col_name, bptree in self.indexes.items():
             bptree.insert(row_dict[col_name], row_idx)
+        self.save_indexes()
 
     def bulk_insert(self, rows: list[dict]):
         """ Insert a list of row dicts in bulk.
@@ -93,6 +107,7 @@ class Table:
             for col_name, bptree in self.indexes.items():
                 bptree.insert(row_dict[col_name], row_idx)
         self.rows.extend(rows)
+        self.save_indexes()
 
 
     def flush(self):
@@ -110,6 +125,7 @@ class Table:
         row_store.clear()
         for row in rows_to_keep:
             row_store.insert_row(row)
+        self.save_indexes()
         # You could also batch-write these for speed!
         # Remove from in-memory indexes if needed
         return n_deleted
