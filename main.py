@@ -1,6 +1,9 @@
 import time
 import threading
 
+import uvicorn
+from api import app  # This is your FastAPI app
+
 from core.stats import get_basic_stats
 from query.execute import execute_query
 from query.parser import parse_command
@@ -26,15 +29,22 @@ def schedule_periodic_compaction(job_queue, schema):
             job_queue.enqueue(Job(colstore.compact, description=f"Periodic compaction for {table_name}"))
         time.sleep(COMPACTION_INTERVAL)
 
+def start_api():
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
+
 def main():
 
     storage_manager = StorageManager()
     schema = Schema()
     schema.load_schema(storage_manager)  # Discover tables on startup
 
-    job_queue = JobQueue()
-    job_queue.start()
+    # job_queue = JobQueue()
+    # job_queue.start()
 
+    # Start FastAPI in a separate thread
+    api_thread = threading.Thread(target=start_api, daemon=True)
+    api_thread.start()
+    
     stats = get_basic_stats(schema)
     import pprint
     pprint.pprint(stats)

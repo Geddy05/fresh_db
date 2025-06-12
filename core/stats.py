@@ -20,6 +20,7 @@ def get_basic_stats(schema):
             num_rows = None  # or 0
 
         stats["tables"][table_name] = {
+            "name" : table_name,
             "columns": len(table.columns),
             "rows": num_rows,
             "disk_usage_bytes": disk_bytes,

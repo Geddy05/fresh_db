@@ -2,10 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import time
 
-# Suppose you have a main DB instance somewhere accessible:
-from core.db import Database  # Adjust this import to your main DB class
+from core.stats import get_basic_stats
+from schema.schema import Schema
+from storage.manager import StorageManager
 
-db = Database()  # Or import your running DB instance
+# Suppose you have a main DB instance somewhere accessible:
+
+storage_manager = StorageManager()
+schema = Schema()
+schema.load_schema(storage_manager)  # Discover tables on startup
+
 
 app = FastAPI()
 
@@ -23,6 +29,6 @@ start_time = time.time()
 @app.get("/stats")
 def get_stats():
     # Implement this in your Database class!
-    stats = db.get_stats()
+    stats = get_basic_stats(schema)
     stats["uptime"] = time.time() - start_time
     return stats
