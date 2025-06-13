@@ -19,7 +19,10 @@ class BlockManager:
             return f.read(BLOCK_SIZE)
 
     def write_block(self, block_num, data):
-        data = data.ljust(BLOCK_SIZE, b"\x00")
+        # Ensure the file exists before opening in 'r+b'
+        if not os.path.exists(self.path):
+            with open(self.path, "wb") as f:
+                pass
         with open(self.path, "r+b") as f:
             f.seek(block_num * BLOCK_SIZE)
             f.write(data)

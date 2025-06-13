@@ -1,6 +1,7 @@
 import os
 from core.column import Column
 from indexing.bplustree import BplusTree
+from storage.block_manager import BlockManager
 from storage.manager import StorageManager
 
 class Table:
@@ -17,10 +18,11 @@ class Table:
             if col.is_unique():
                 bptree = None
                 idx_path = f"data/indexes/{self.name}_{col.name}_bptree.json"
+                block_manager = BlockManager(idx_path)
                 if os.path.exists(idx_path):
-                    bptree = BplusTree.load(idx_path, order=32)
+                    bptree = BplusTree.load(idx_path, order=32, block_manager=block_manager)
                 else:
-                    bptree = BplusTree(order=32)
+                    bptree = BplusTree(order=32, block_manager=block_manager)
                 self.indexes[col.name] = bptree
 
 
@@ -70,10 +72,12 @@ class Table:
         row_idx = len(self.rows)
         self.storage.write_row(self.name, row_dict)
 
-        # Update indexes
+         # Update indexes and persist only dirty nodes
         for col_name, bptree in self.indexes.items():
             bptree.insert(row_dict[col_name], row_idx)
-        self.save_indexes()
+            for node in bptree.dirty_nodes():
+                bptree.save_node(node)
+        # self.save_indexes()
 
     def bulk_insert(self, rows: list[dict]):
         """ Insert a list of row dicts in bulk.
@@ -113,7 +117,12 @@ class Table:
             for col_name, bptree in self.indexes.items():
                 bptree.insert(row_dict[col_name], row_idx)
         self.rows.extend(rows)
-        self.save_indexes()
+        
+        #Update the
+        for col_name, bptree in self.indexes.items():
+            for node in bptree.dirty_nodes():
+                bptree.save_node(node)
+        # self.save_indexes()
 
 
     def flush(self):
