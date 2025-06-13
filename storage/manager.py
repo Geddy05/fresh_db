@@ -1,5 +1,5 @@
-import json
 import os
+import glob
 from storage.row_store import RowStore
 from storage.column_store import ColumnStore
 
@@ -14,7 +14,8 @@ class StorageManager:
     def _ensure_dirs(self):
         os.makedirs(os.path.join(self.base_path, "wal"), exist_ok=True)
         os.makedirs(os.path.join(self.base_path, "segments"), exist_ok=True)
-    
+        os.makedirs(os.path.join(self.base_path, "indexes"), exist_ok=True)
+
     def get_row_store(self, table_name) -> RowStore:
         if table_name not in self.row_stores:
             self.row_stores[table_name] = RowStore(table_name, self.base_path)
@@ -26,11 +27,9 @@ class StorageManager:
         return self.column_stores[table_name]
     
     def write_row(self, table_name, row: dict):
-        """Insert into OLTP row store and log to WAL."""
         self.get_row_store(table_name).insert_row(row)
 
     def bulk_write(self, table_name, rows:  list[dict]):
-        """Insert into OLTP row store and log to WAL."""
         self.get_row_store(table_name).bulk_insert_rows(rows)
 
     def drop_table(self, table_name):
@@ -38,42 +37,28 @@ class StorageManager:
         if table_name in self.row_stores:
             self.row_stores[table_name].drop()
             del self.row_stores[table_name]
-        # Drop ColumnStore (optional, if you store columnar segments)
         if table_name in self.column_stores:
-            self.column_stores[table_name].drop()  # You'll need to implement drop() in ColumnStore
+            self.column_stores[table_name].drop()
             del self.column_stores[table_name]
-        # Remove any other related files if needed (indexes, etc)
+        # Remove index files (block and meta)
+        index_pattern = os.path.join(self.base_path, "indexes", f"{table_name}_*")
+        for file_path in glob.glob(index_pattern):
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
 
     def flush_table(self, table_name):
-        """Flush rows to OLAP (segment) and clear WAL."""
         row_store = self.get_row_store(table_name)
         col_store = self.get_column_store(table_name)
-
         rows = row_store.get_rows()
         if not rows:
             return
-
         col_store.flush(rows)
-        row_store.clear()  # Clears in-memory rows and WAL
+        row_store.clear()
 
     def load_all_tables(self):
-        """Replay WALs at startup to restore in-memory state."""
         for file in os.listdir(os.path.join(self.base_path, "wal")):
             if file.endswith(".wal"):
                 table_name = file.replace(".wal", "")
                 store = self.get_row_store(table_name)
-                # store.replay_wal()
-
-
-    # def save_table(self, table_name, table_obj):
-    #     path = os.path.join(DATA_DIR, f"{table_name}.tbl.json")
-    #     with open(path, "w") as f:
-    #         json.dump(table_obj.to_dict(), f)
-
-    # def load_table(self, table_name):
-    #     path = os.path.join(DATA_DIR, f"{table_name}.tbl.json")
-    #     if not os.path.exists(path):
-    #         raise FileNotFoundError(f"Table {table_name} does not exist.")
-    #     with open(path, "r") as f:
-    #         data = json.load(f)
-    #     return Table.from_dict(data)

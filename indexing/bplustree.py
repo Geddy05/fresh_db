@@ -161,6 +161,120 @@ class BplusTree:
                 node = None
             idx = 0
 
+    def dirty_nodes(self):
+        """
+        Traverse the B+Tree and return a list of all nodes with dirty=True.
+        """
+        dirty = []
+        visited = set()
+        
+        def collect(node):
+            if node.node_id in visited:
+                return
+            visited.add(node.node_id)
+            if getattr(node, "dirty", False):
+                dirty.append(node)
+            if not node.leaf:
+                for child_id in node.children:
+                    child = self.load_node(child_id)
+                    collect(child)
+        collect(self.root)
+        return dirty
+
+    @classmethod
+    def bulk_load(cls, items, order=32, block_manager=None):
+        """
+        Bulk load the tree from a sorted list of (key, value) pairs.
+        - items: list of (key, value) tuples (MUST BE SORTED and unique)
+        - order: maximum number of keys per node
+        - block_manager: BlockManager instance for disk writes
+        Returns: new BplusTree instance
+        """
+        assert block_manager is not None, "Bulk load requires a BlockManager"
+
+        # 1. Create leaves
+        leaf_nodes = []
+        node_size = order - 1  # max keys per node
+        n = len(items)
+        for i in range(0, n, node_size):
+            chunk = items[i:i + node_size]
+            keys = [k for k, v in chunk]
+            values = [v for k, v in chunk]
+            node = Node(order, leaf=True)
+            node.keys = keys
+            node.values = values
+            leaf_nodes.append(node)
+
+        # Set up leaf 'next' pointers
+        for i in range(len(leaf_nodes) - 1):
+            leaf_nodes[i].next = leaf_nodes[i + 1].node_id
+        leaf_nodes[-1].next = None
+
+        # 2. Write leaves to disk
+        for node in leaf_nodes:
+            node.dirty = False
+            block_id = int(uuid.UUID(node.node_id).int % 1_000_000)
+            data = pickle.dumps({
+                "order": node.order,
+                "leaf": node.leaf,
+                "keys": node.keys,
+                "values": node.values,
+                "children": node.children,
+                "next": node.next,
+                "node_id": node.node_id
+            })
+            block_manager.write_block(block_id, data[:8192])
+
+        # 3. Build internal levels upward
+        current_level = leaf_nodes
+        while len(current_level) > 1:
+            next_level = []
+            for i in range(0, len(current_level), node_size + 1):
+                chunk = current_level[i:i + node_size + 1]
+                keys = [node.keys[0] for node in chunk[1:]]  # separator keys
+                children = [node.node_id for node in chunk]
+                parent = Node(order, leaf=False)
+                parent.keys = keys
+                parent.children = children
+
+                # Write parent to disk
+                parent.dirty = False
+                block_id = int(uuid.UUID(parent.node_id).int % 1_000_000)
+                data = pickle.dumps({
+                    "order": parent.order,
+                    "leaf": parent.leaf,
+                    "keys": parent.keys,
+                    "values": parent.values,
+                    "children": parent.children,
+                    "next": parent.next,
+                    "node_id": parent.node_id
+                })
+                block_manager.write_block(block_id, data[:8192])
+                next_level.append(parent)
+            current_level = next_level
+
+        # 4. The only node left is the root
+        root = current_level[0]
+        tree = cls(order=order, block_manager=block_manager)
+        tree.root = root
+        tree.root_node_id = root.node_id
+
+        # Write root to disk
+        block_id = int(uuid.UUID(root.node_id).int % 1_000_000)
+        data = pickle.dumps({
+            "order": root.order,
+            "leaf": root.leaf,
+            "keys": root.keys,
+            "values": root.values,
+            "children": root.children,
+            "next": root.next,
+            "node_id": root.node_id
+        })
+        block_manager.write_block(block_id, data[:8192])
+
+        return tree
+
+
     def __repr__(self):
         levels = []
         def visit(node, depth=0):
